@@ -1,0 +1,7 @@
+*.ko
+*.o
+*.orig
+*.rej
+.depend*
+machine
+x86

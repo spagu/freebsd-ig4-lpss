@@ -1,0 +1,44 @@
+Attachment description (the one-line field next to the file in Bugzilla):
+
+    ig4: bring ACPI-enumerated LPSS controllers out of D3 and ungate their clock
+
+Attachment content type: text/plain, tick "patch".
+
+
+Commit message, FreeBSD style: subject under 63 characters, body wrapped at
+72, footers last. Paste it as a comment on the bug so a committer can take it
+as is.
+
+----------------------------------------------------------------------
+
+ig4: fix attach of ACPI-enumerated LPSS controllers
+
+Intel LPSS I2C controllers enumerated through ACPI rather than PCI never
+attach on Haswell and Broadwell, so every device behind those buses is
+lost. On a Dell XPS 13 9343 that hides the I2C HID touchpad and leaves
+only the PS/2 fallback, which the firmware does not restore after S3.
+
+Three causes, all on the ACPI path:
+
+Firmware may leave an LPSS function in D3, where its registers read as
+all-ones and set_controller() fails with "controller error during
+attach-1". Run _PS0 before mapping them. The PCI path does not need
+this, which is why the gap went unnoticed.
+
+INT33C2, INT33C3, INT3432 and INT3433 are Lynx Point-LP and Wildcat
+Point-LP, which ig4_pci.c already classifies as IG4_HASWELL; the ACPI
+path called everything but APMC0D0F an Atom SoC.
+
+The functional clock stays gated until bit 0 of IG4_REG_CLK_PARMS is
+set. Until then the controller accepts writes into the TX FIFO, never
+drives the bus, raises no interrupts, and every transfer ends in
+IIC_ETIMEOUT. Linux ungates the same bit in acpi_lpss.c. Doing it in
+ig4iic_set_config() covers resume as well as attach.
+
+With all three in place the touchpad attaches as iichid0/hmt1 with
+multi-touch and survives suspend and resume.
+
+PR:		<bug number once the report is filed>
+Reported by:	<name> <email>
+Tested by:	<name> (XPS 13 9343, Broadwell-U, 15.1-RELEASE-p3)
+MFC after:	1 week

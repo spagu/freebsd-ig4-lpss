@@ -1,0 +1,53 @@
+--- sys/dev/ichiic/ig4_reg.h.orig
++++ sys/dev/ichiic/ig4_reg.h
+@@ -124,6 +124,7 @@
+ #define IG4_REG_DEVIDLE_CTRL	0x024C	/* RW	Device Control */
+ /* Available at least on Atom SoCs */
+ #define IG4_REG_CLK_PARMS	0x0800	/* RW	Clock Parameters */
++#define IG4_CLK_PARMS_EN	0x00000001 /* functional clock ungated */
+ /* Available at least on Atom SoCs and Haswell mobile */
+ #define IG4_REG_RESETS_HSW	0x0804	/* RW	Reset Register */
+ #define IG4_REG_GENERAL		0x0808	/* RW	General Register */
+--- sys/dev/ichiic/ig4_acpi.c.orig
++++ sys/dev/ichiic/ig4_acpi.c
+@@ -95,10 +95,20 @@
+ 		return (error);
+ 	if (strcmp(str, "APMC0D0F") == 0) {
+ 		sc->version = IG4_EMAG;
++	} else if (strcmp(str, "INT33C2") == 0 || strcmp(str, "INT33C3") == 0 ||
++	    strcmp(str, "INT3432") == 0 || strcmp(str, "INT3433") == 0) {
++		/* Lynx Point-LP / Wildcat Point-LP LPSS in ACPI mode. */
++		sc->version = IG4_HASWELL;
+ 	} else {
+ 		/* All the other HIDs matched are Atom SOCs. */
+ 		sc->version = IG4_ATOM;
+ 	}
++	/*
++	 * Firmware may leave LPSS functions in D3 (e.g. Dell XPS 13 9343):
++	 * the registers then read as all-ones and attach fails.  Run _PS0.
++	 */
++	acpi_set_powerstate(dev, ACPI_STATE_D0);
++
+ 	sc->regs_rid = 0;
+ 	sc->regs_res = bus_alloc_resource_any(dev, SYS_RES_MEMORY,
+ 					  &sc->regs_rid, RF_ACTIVE);
+--- sys/dev/ichiic/ig4_iic.c.orig
++++ sys/dev/ichiic/ig4_iic.c
+@@ -922,6 +922,17 @@
+ 		reset = true;
+ 	}
+ 
++	/*
++	 * Haswell/Broadwell LPSS in ACPI mode can come up with the functional
++	 * clock gated.  The controller then accepts FIFO writes but never
++	 * drives the bus and every transfer times out.
++	 */
++	if (sc->version == IG4_HASWELL) {
++		v = reg_read(sc, IG4_REG_CLK_PARMS);
++		if ((v & IG4_CLK_PARMS_EN) == 0)
++			reg_write(sc, IG4_REG_CLK_PARMS, v | IG4_CLK_PARMS_EN);
++	}
++
+ 	if ((sc->version == IG4_HASWELL || sc->version == IG4_ATOM) && reset) {
+ 		reg_write(sc, IG4_REG_RESETS_HSW, IG4_RESETS_ASSERT_HSW);
+ 		reg_write(sc, IG4_REG_RESETS_HSW, IG4_RESETS_DEASSERT_HSW);
