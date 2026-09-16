@@ -1,16 +1,27 @@
 Plain-text version for pasting into FreeBSD Bugzilla. Everything below the
 line goes into Description; the fields above it into the form.
 
-Product:    Base System
-Component:  kern
-Version:    15.1-RELEASE
-Hardware:   amd64
-OS:         FreeBSD
-Summary:    ig4(4): ACPI-enumerated LPSS I2C controllers fail to attach on
-            Haswell/Broadwell (D3 at attach, wrong version, gated clock)
-Attachment: ig4-lpss-acpi.diff, content type text/plain, tick "patch"
-Keywords:   patch
-See Also:   https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=275115
+Product:     Base System
+Component:   kern
+Version:     15.1-RELEASE
+Hardware:    amd64 / Any
+Summary:     ig4(4): ACPI-enumerated LPSS I2C controllers fail to attach on
+             Haswell/Broadwell (D3 at attach, wrong version, gated clock)
+Importance:  --- / Affects Some People
+             (every Haswell/Broadwell machine with LPSS in ACPI mode, not
+             just this laptop; priority is left to the committers)
+Assignee:    leave freebsd-bugs, and CC wulf@FreeBSD.org - he maintains
+             iichid/hid and handled the ig4 patch in bug 275115
+URL:         https://github.com/spagu/freebsd-ig4-lpss
+Keywords:    patch
+See Also:    https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=275115
+Alias:       leave None
+Depends on / Blocks: leave empty
+Attachment:  ig4-lpss-acpi.diff, content type text/plain, tick "patch"
+Filed as:    bug 298558
+
+Worth adding as a follow-up comment: the commit message from
+commit-message.txt, so a committer can take the change as it stands.
 
 ----------------------------------------------------------------------
 

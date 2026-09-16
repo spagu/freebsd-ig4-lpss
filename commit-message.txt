@@ -38,7 +38,7 @@ ig4iic_set_config() covers resume as well as attach.
 With all three in place the touchpad attaches as iichid0/hmt1 with
 multi-touch and survives suspend and resume.
 
-PR:		<bug number once the report is filed>
+PR:		298558
 Reported by:	<name> <email>
 Tested by:	<name> (XPS 13 9343, Broadwell-U, 15.1-RELEASE-p3)
 MFC after:	1 week
